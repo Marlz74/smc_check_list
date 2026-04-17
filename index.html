@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMC Trade Workflow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Epilogue:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sans: 'Epilogue', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --t: 0.2s ease;
+  --p1: #0D9488;
+  --p2: #2563EB;
+  --p3: #6D28D9;
+  --p4: #B45309;
+}
+
+[data-theme="dark"] {
+  --bg:        #0C0F17;
+  --surface:   #111827;
+  --surface2:  #1A2236;
+  --border:    #1F2A40;
+  --border2:   #2A3856;
+  --text:      #E9ECF5;
+  --text2:     #8892B0;
+  --text3:     #4E5A78;
+  --rule-bg:   #090D17;
+  --badge-bg:  #151E30;
+  --tog-bg:    #1A2236;
+  --sh:        0 1px 3px rgba(0,0,0,.5), 0 4px 20px rgba(0,0,0,.3);
+  --sh-sm:     0 1px 2px rgba(0,0,0,.4);
+}
+
+[data-theme="light"] {
+  --bg:        #F2F5FC;
+  --surface:   #FFFFFF;
+  --surface2:  #EDF0FA;
+  --border:    #DDE2EF;
+  --border2:   #C5CEEA;
+  --text:      #0E1629;
+  --text2:     #48577A;
+  --text3:     #8A96B8;
+  --rule-bg:   #F7F9FF;
+  --badge-bg:  #EEF1FC;
+  --tog-bg:    #E4E8F5;
+  --sh:        0 1px 3px rgba(14,22,41,.08), 0 4px 16px rgba(14,22,41,.05);
+  --sh-sm:     0 1px 2px rgba(14,22,41,.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--t), color var(--t);
+}
+
+/* ── PAGE ── */
+.page {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+/* ── TOP BAR ── */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 36px;
+  animation: fd .5s ease both;
+}
+
+.wordmark {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+/* theme toggle */
+.tog {
+  display: flex;
+  background: var(--tog-bg);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 3px;
+  cursor: pointer;
+  gap: 2px;
+  transition: border-color var(--t);
+}
+.tog:hover { border-color: var(--border2); }
+
+.tog-btn {
+  width: 34px; height: 28px;
+  border-radius: 100px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--t), box-shadow var(--t);
+}
+.tog-btn.on {
+  background: var(--surface);
+  box-shadow: var(--sh-sm);
+}
+
+.tog-icon {
+  width: 15px; height: 15px;
+  fill: none;
+  stroke: var(--text3);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke var(--t);
+}
+.tog-btn.on .tog-icon { stroke: var(--text2); }
+
+/* ── HEADER CARD ── */
+.hcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 26px 26px 22px;
+  margin-bottom: 28px;
+  box-shadow: var(--sh);
+  animation: fd .45s .05s ease both;
+}
+
+.hcard-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.htitle h1 {
+  font-size: clamp(20px, 3.5vw, 28px);
+  font-weight: 700;
+  letter-spacing: -.025em;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+
+.htitle p {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+/* score */
+.score {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  text-align: center;
+  min-width: 96px;
+  flex-shrink: 0;
+}
+.score-n {
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text);
+  transition: color .3s;
+  font-variant-numeric: tabular-nums;
+}
+.score-n .den { font-size: 15px; color: var(--text3); }
+.score-n.go { color: var(--p1); }
+.score-lbl {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-top: 3px;
+}
+
+/* progress */
+.prog {
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.prog-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--p1);
+  border-radius: 2px;
+  transition: width .4s cubic-bezier(.4,0,.2,1);
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.status {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color .3s;
+}
+.status::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text3);
+  flex-shrink: 0;
+  transition: background .3s;
+}
+.status.go { color: var(--p1); }
+.status.go::before { background: var(--p1); }
+
+.rst-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text3);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: color var(--t), border-color var(--t);
+}
+.rst-btn:hover { color: var(--text2); border-color: var(--border2); }
+
+/* ── PHASE GROUPS ── */
+.pgroup {
+  margin-bottom: 4px;
+  animation: fu .4s ease both;
+}
+.pgroup:nth-child(1){ animation-delay:.10s; }
+.pgroup:nth-child(2){ animation-delay:.17s; }
+.pgroup:nth-child(3){ animation-delay:.24s; }
+.pgroup:nth-child(4){ animation-delay:.31s; }
+
+.plabel {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 2px;
+  margin-bottom: 6px;
+}
+.ppip {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.pname {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.ptf {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .07em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+
+/* ── STEP CARDS ── */
+.scard {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 5px;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: var(--sh-sm);
+  transition: border-color var(--t), background var(--t), transform .12s;
+}
+.scard:hover {
+  border-color: var(--border2);
+  transform: translateY(-1px);
+  box-shadow: var(--sh);
+}
+.scard:active { transform: translateY(0); }
+.scard.done {
+  border-color: var(--ac);
+  background: color-mix(in srgb, var(--ac) 5%, var(--surface));
+}
+
+/* stripe */
+.stripe {
+  width: 3px;
+  flex-shrink: 0;
+  background: var(--ac);
+  opacity: .2;
+  transition: opacity .2s;
+}
+.scard.done .stripe { opacity: 1; }
+
+/* checkbox */
+.cbw {
+  display: flex; align-items: center; justify-content: center;
+  width: 50px; flex-shrink: 0;
+}
+.cbring {
+  width: 21px; height: 21px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, border-color .2s;
+}
+.scard.done .cbring { background: var(--ac); border-color: var(--ac); }
+.cbcheck {
+  width: 8px; height: 5px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) translateY(-1px);
+  opacity: 0;
+  transition: opacity .15s;
+}
+.scard.done .cbcheck { opacity: 1; }
+
+/* card content */
+.sbody {
+  flex: 1;
+  padding: 14px 16px 14px 2px;
+  min-width: 0;
+}
+.smeta {
+  display: flex; align-items: center; gap: 7px;
+  margin-bottom: 5px;
+}
+.snumbadge {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ac);
+  background: color-mix(in srgb, var(--ac) 13%, var(--badge-bg));
+  border: 1px solid color-mix(in srgb, var(--ac) 28%, transparent);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+.stitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  margin-bottom: 5px;
+  transition: color .2s;
+}
+.scard.done .stitle {
+  color: color-mix(in srgb, var(--ac) 75%, var(--text));
+}
+.sdesc {
+  font-size: 12.5px;
+  color: var(--text2);
+  line-height: 1.65;
+  margin-bottom: 9px;
+}
+.srule {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--rule-bg);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--ac);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 7px 10px;
+}
+.rlabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ac);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.rbody {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.6;
+  transition: color .2s;
+}
+.scard.done .rbody {
+  color: color-mix(in srgb, var(--ac) 55%, var(--text3));
+}
+
+/* ── FOOTER ── */
+.footer {
+  margin-top: 44px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text3);
+  animation: fu .5s .4s ease both;
+}
+
+/* ── BURST ── */
+@keyframes burst {
+  0%  { opacity:0; }
+  25% { opacity:1; }
+  100%{ opacity:0; }
+}
+.burst {
+  position: fixed; inset: 0;
+  background: color-mix(in srgb, var(--p1) 9%, transparent);
+  pointer-events: none;
+  z-index: 999;
+  animation: burst .8s ease forwards;
+}
+
+/* ── KEYFRAMES ── */
+@keyframes fd {
+  from { opacity:0; transform:translateY(-12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes fu {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:520px){
+  .page{ padding:28px 14px 60px; }
+  .hcard{ padding:18px 16px 16px; }
+  .stitle{ font-size:13px; }
+  .sdesc{ font-size:12px; }
+  .score{ min-width:84px; padding:10px 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="wordmark">SMC · Trade Workflow</div>
+
+    <div class="tog" onclick="toggleTheme()" role="button" aria-label="Toggle theme">
+      <div class="tog-btn" id="tb-dark">
+        <!-- moon -->
+        <svg class="tog-icon" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </div>
+      <div class="tog-btn" id="tb-light">
+        <!-- sun -->
+        <svg class="tog-icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="4.5"/>
+          <line x1="12" y1="2"  x2="12" y2="5"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+          <line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/>
+          <line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/>
+          <line x1="2"  y1="12" x2="5"  y2="12"/>
+          <line x1="19" y1="12" x2="22" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/>
+          <line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="hcard">
+    <div class="hcard-top">
+      <div class="htitle">
+        <h1>Trade Entry Checklist</h1>
+        <p>Complete all 9 conditions in sequence. Do not execute until every step is confirmed.</p>
+      </div>
+      <div class="score">
+        <div class="score-n" id="sn">0<span class="den">/9</span></div>
+        <div class="score-lbl">confirmed</div>
+      </div>
+    </div>
+
+    <div class="prog">
+      <div class="prog-fill" id="pf"></div>
+    </div>
+
+    <div class="status-row">
+      <div class="status" id="st">Incomplete — keep waiting</div>
+      <button class="rst-btn" onclick="resetAll()">Reset</button>
+    </div>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div id="cl"></div>
+
+  <div class="footer">SD Marlz · SMC Strategy</div>
+</div>
+
+<script>
+const PHASES = [
+  {
+    label:"Phase 1 — Higher timeframe structure", tf:"4H / 1H", color:"#0D9488",
+    steps:[
+      { n:"Step 01", title:"Identify the HTF external range",
+        desc:"Find the most recent significant swing HIGH and swing LOW defining the current range. These are the boundaries institutional money is operating within. Complete this before touching any lower timeframe.",
+        rule:"Mark range high and range low on your chart before doing anything else." },
+      { n:"Step 02", title:"Locate the external low (EX.LOW)",
+        desc:"Identify the most recent significant low where retail stop losses pool below. Institutions need to sweep this liquidity before driving price higher. Each new BOS leg has its own EX.LOW — do not reuse a prior one.",
+        rule:"EX.LOW = the last major swing low before the specific move you are preparing to trade." },
+      { n:"Step 03", title:"External BOS confirmed — clear bias",
+        desc:"A 1H candle BODY must close above the prior external swing high (longs) or below the prior external swing low (shorts). This break of external structure is the only valid confirmation of directional bias.",
+        rule:"Body close only. A wick above the level does not qualify. No BOS = no trade." }
+    ]
+  },
+  {
+    label:"Phase 2 — Find value", tf:"1H Fibonacci", color:"#2563EB",
+    steps:[
+      { n:"Step 04", title:"Draw Fibonacci — EX.LOW to Ex.High",
+        desc:"Anchor swing LOW at the EX.LOW swept before the BOS leg. Anchor swing HIGH at the highest wick of the displacement that broke structure (Ex.High). Always draw low → high in an uptrend.",
+        rule:"Anchor to the actual price extreme of each swing — never to the BOS level itself." },
+      { n:"Step 05", title:"Price retraces into OTE zone (61.8–79%)",
+        desc:"Price must pull back from Ex.High into the optimal trade entry zone between 61.8% and 79%. This is where institutional orders are resting. Entries placed outside this zone carry sub-standard probability.",
+        rule:"61.8% touch with strong reversal action qualifies. Do not hold out for 79% if reversal is already printing." }
+    ]
+  },
+  {
+    label:"Phase 3 — 15m trigger & validation", tf:"15m", color:"#6D28D9",
+    steps:[
+      { n:"Step 06", title:"Liquidity sweep inside OTE (iBOS)",
+        desc:"Price sweeps a minor swing low inside the OTE zone — an internal break of structure downward that grabs resting stop losses. This micro liquidity grab directly precedes the reversal you are trading.",
+        rule:"iBOS low is your SL reference. Must occur inside or adjacent to OTE — not far below it." },
+      { n:"Step 07", title:"CHoCH — 15m body close above swept swing",
+        desc:"A 15m candle BODY must close above the swing high formed just before the iBOS swept its low. This is the change of character — internal 15m structure flips bullish, aligning with the confirmed 1H bias.",
+        rule:"Body close above that specific swing high only. A wick does not qualify. Wait for the next candle if needed." },
+      { n:"Step 08", title:"Displacement creates a new FVG",
+        desc:"The move after CHoCH must be impulsive — a 3-candle sequence where the middle candle's range does not overlap the wicks of its neighbours. This Fair Value Gap is your precise limit-order entry zone.",
+        rule:"FVG = gap between candle 1 high and candle 3 low. Place limit order inside the gap on the pullback." }
+    ]
+  },
+  {
+    label:"Phase 4 — Define trade parameters", tf:"1H", color:"#B45309",
+    steps:[
+      { n:"Step 09", title:"Target and stop loss defined before entry",
+        desc:"Target: nearest cluster of 1H equal highs where retail liquidity rests above price. Stop loss: below the iBOS low (EX.LOW level). Both must be clearly marked on your chart before any order is placed.",
+        rule:"No visible target = no trade. Minimum 1:2 risk/reward must be confirmed before executing." }
+    ]
+  }
+];
+
+const states = Array(9).fill(false);
+let gi = 0;
+
+function build(){
+  const cl = document.getElementById('cl');
+  PHASES.forEach((ph, pi) => {
+    const g = document.createElement('div');
+    g.className = 'pgroup';
+
+    // phase label
+    const pl = document.createElement('div');
+    pl.className = 'plabel';
+    pl.style.marginTop = pi === 0 ? '0' : '20px';
+    pl.innerHTML = `
+      <div class="ppip" style="background:${ph.color}"></div>
+      <span class="pname">${ph.label}</span>
+      <span class="ptf" style="color:${ph.color};border-color:${ph.color}33;background:${ph.color}10">${ph.tf}</span>`;
+    g.appendChild(pl);
+
+    ph.steps.forEach(s => {
+      const idx = gi++;
+      const c = document.createElement('div');
+      c.className = 'scard';
+      c.id = `c${idx}`;
+      c.style.setProperty('--ac', ph.color);
+      c.innerHTML = `
+        <div class="stripe"></div>
+        <div class="cbw"><div class="cbring"><div class="cbcheck"></div></div></div>
+        <div class="sbody">
+          <div class="smeta"><span class="snumbadge">${s.n}</span></div>
+          <div class="stitle">${s.title}</div>
+          <div class="sdesc">${s.desc}</div>
+          <div class="srule">
+            <span class="rlabel">Rule</span>
+            <span class="rbody">${s.rule}</span>
+          </div>
+        </div>`;
+      c.addEventListener('click', () => toggle(idx));
+      g.appendChild(c);
+    });
+    cl.appendChild(g);
+  });
+}
+
+function toggle(i){
+  states[i] = !states[i];
+  document.getElementById(`c${i}`).classList.toggle('done', states[i]);
+  upd();
+}
+
+function upd(){
+  const n = states.filter(Boolean).length;
+  document.getElementById('sn').innerHTML = `${n}<span class="den">/9</span>`;
+  document.getElementById('sn').classList.toggle('go', n === 9);
+  document.getElementById('pf').style.width = (n/9*100) + '%';
+  const st = document.getElementById('st');
+  if(n === 9){
+    st.textContent = 'All confirmed — execute trade';
+    st.classList.add('go');
+    burst();
+  } else {
+    st.textContent = `${n} of 9 confirmed — keep waiting`;
+    st.classList.remove('go');
+  }
+}
+
+function burst(){
+  const el = document.createElement('div');
+  el.className = 'burst';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 850);
+}
+
+function resetAll(){
+  states.fill(false);
+  for(let i=0;i<9;i++){
+    const el = document.getElementById(`c${i}`);
+    if(el) el.classList.remove('done');
+  }
+  upd();
+}
+
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('tb-dark').classList.toggle('on', t==='dark');
+  document.getElementById('tb-light').classList.toggle('on', t==='light');
+  try{ localStorage.setItem('smc-theme', t); }catch(e){}
+}
+
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme');
+  setTheme(cur === 'dark' ? 'light' : 'dark');
+}
+
+const saved = (()=>{ try{ return localStorage.getItem('smc-theme'); }catch(e){ return null; } })();
+setTheme(saved || 'light');
+build();
+</script>
+</body>
+</html>
